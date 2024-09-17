@@ -105,7 +105,7 @@ std::ostream& operator<<(std::ostream& os, const Crime& obj)
 	return os << obj.get_time() << tab << obj.get_place() << " - " << obj.get_violation();
 }
 
-void whrite_to_file(std::map<std::string, std::list<Crime>> base);
+void write_to_file(std::map<std::string, std::list<Crime>> base);
 void read_form_file();
 
 void main()
@@ -130,21 +130,27 @@ void main()
 		cout << delimiter << endl;
 	}
 
-	whrite_to_file(base);
+	write_to_file(base);
 
 	read_form_file();
 }
 
-void whrite_to_file(std::map<std::string, std::list<Crime>> base)
+void write_to_file(std::map<std::string, std::list<Crime>> base)
 {
-	std::ofstream fout;
-	fout.open("Database.xls");
-	fout << "Номер машины" << tab << "Дата и время" << tab << "Место и нарушение" << endl;
+	std::ofstream fout_xls, fout_txt;
+	fout_xls.open("Database.xls");
+	fout_txt.open("Database.txt");
+	fout_xls << "Номер машины" << tab << "Дата и время" << tab << "Место и нарушение" << endl;
+	fout_txt << "Номер машины" << tab << "Дата и время" << tab << "Место и нарушение" << endl;
 	for (std::map<std::string, std::list<Crime>>::iterator map_it = base.begin(); map_it != base.end(); ++map_it)
 	{
-		fout << map_it->first << ":\n";
+		fout_xls << map_it->first << ":\n";
+		fout_txt << map_it->first << ":\n";
 		for (std::list<Crime>::iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
-			fout << tab << *it << endl;
+		{
+			fout_xls << tab << *it << endl;
+			fout_txt << tab << *it << endl;
+		}
 	}
 }
 void read_form_file()
