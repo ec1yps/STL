@@ -1,5 +1,5 @@
-﻿#pragma warning (disable: 4326)
-#pragma warning (disable: 6262)
+﻿#define _CRT_SECURE_NO_WARNINGS
+#pragma warning (disable: 4326)
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -41,7 +41,7 @@ class Crime
 	//std::string licence_plate;
 	int id;
 	std::string place;
-	std::string time;
+	tm time;
 public:
 	/*const std::string& get_licence_plate()const
 	{
@@ -59,9 +59,15 @@ public:
 	{
 		return place;
 	}
-	const std::string& get_time()const
+	const std::string get_time()const
 	{
-		return time;
+		/*std::string result = asctime(&time);
+		result.pop_back();
+		return result;*/
+		const int SIZE = 256;
+		char formatted[SIZE]{};
+		strftime(formatted, SIZE, "%R %e.%m.%Y", &time);
+		return formatted;
 	}
 	/*void set_licence_plate(const std::string& licence_plate)
 	{
@@ -77,19 +83,35 @@ public:
 	}
 	void set_time(const std::string& time)
 	{
-		this->time = time;
+		//this->time = time;
+		char* time_buffer = new char[time.size() + 1] {};
+		strcpy(time_buffer, time.c_str());
+
+		int time_elements[5]{};
+		int i = 0;
+		char delimiters[] = ":./ ";
+		for (char* pch = strtok(time_buffer, delimiters); pch; pch = strtok(NULL, delimiters))
+			time_elements[i++] = std::atoi(pch);
+
+		delete[] time_buffer;
+
+		this->time.tm_hour = time_elements[0];
+		this->time.tm_min = time_elements[1];
+		this->time.tm_mday = time_elements[2];
+		this->time.tm_mon = time_elements[3];
+		this->time.tm_year = time_elements[4] - 1900;
 	}
 
 	//	Constructors:
 	Crime(int violance_id, const std::string& place, const std::string& time)
 	{
+		this->time = {};
 		set_violation_id(violance_id);
 		set_place(place);
 		set_time(time);
-#ifdef DEBUG
+#ifdef DEBUG/
 		cout << "Constructor:\t" << this << endl;
 #endif // DEBUG
-
 	}
 	~Crime()
 	{
@@ -105,8 +127,9 @@ std::ostream& operator<<(std::ostream& os, const Crime& obj)
 	return os << obj.get_time() << tab << obj.get_place() << " - " << obj.get_violation();
 }
 
-void write_to_file(std::map<std::string, std::list<Crime>> base);
-void read_form_file();
+void print(const std::map<std::string, std::list<Crime>>& base);
+void write_to_file(const std::map<std::string, std::list<Crime>>& base, const std::string& filename);
+void read_form_file(const std::string& filename);
 
 void main()
 {
@@ -121,41 +144,42 @@ void main()
 		{"a001aa", {Crime(10, "ул. Пролетарская", "21:50 01.08.2024"), Crime(9,"ул. Пролетарская", "21:50 01.08.2024"), Crime(11,"ул. Пролетарская", "21:50 01.08.2024"), Crime(12,"ул. Пролетарская", "22:05 01.08.2024")}}
 	};
 
+	print(base);
+
+	write_to_file(base, "Database.txt");
+
+	//read_form_file();
+}
+
+void print(const std::map<std::string, std::list<Crime>>& base)
+{
 	cout << delimiter << endl;
-	for (std::map<std::string, std::list<Crime>>::iterator map_it = base.begin(); map_it != base.end(); ++map_it)
+	for (std::map<std::string, std::list<Crime>>::const_iterator map_it = base.begin(); map_it != base.end(); ++map_it)
 	{
 		cout << map_it->first << ":\n";
-		for (std::list<Crime>::iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
+		for (std::list<Crime>::const_iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
 			cout << tab << *it << endl;
 		cout << delimiter << endl;
 	}
-
-	write_to_file(base);
-
-	read_form_file();
 }
 
-void write_to_file(std::map<std::string, std::list<Crime>> base)
+void write_to_file(const std::map<std::string, std::list<Crime>>& base, const std::string& filename)
 {
-	std::ofstream fout_xls, fout_txt;
-	fout_xls.open("Database.xls");
-	fout_txt.open("Database.txt");
-	fout_xls << "Номер машины" << tab << "Дата и время" << tab << "Место и нарушение" << endl;
-	fout_txt << "Номер машины" << tab << "Дата и время" << tab << "Место и нарушение" << endl;
-	for (std::map<std::string, std::list<Crime>>::iterator map_it = base.begin(); map_it != base.end(); ++map_it)
+	std::ofstream fout;
+	fout.open(filename);
+	fout << "Номер машины" << tab << "Дата и время" << tab << "Место и нарушение" << endl;
+	for (std::map<std::string, std::list<Crime>>::const_iterator map_it = base.begin(); map_it != base.end(); ++map_it)
 	{
-		fout_xls << map_it->first << ":\n";
-		fout_txt << map_it->first << ":\n";
-		for (std::list<Crime>::iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
+		fout << map_it->first << ":\n";
+		for (std::list<Crime>::const_iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
 		{
-			fout_xls << tab << *it << endl;
-			fout_txt << tab << *it << endl;
+			fout << tab << *it << endl;
 		}
 	}
 }
-void read_form_file()
+void read_form_file(const std::string& filename)
 {
-	std::ifstream fin("Database.xls");
+	std::ifstream fin(filename);
 	if (fin.is_open())
 	{
 		std::string line;
