@@ -38,15 +38,10 @@ const std::map<int, std::string> VIOLATIONS =
 
 class Crime
 {
-	//std::string licence_plate;
 	int id;
 	std::string place;
 	tm time;
 public:
-	/*const std::string& get_licence_plate()const
-	{
-		return licence_plate;
-	}*/
 	int get_violation_id()const
 	{
 		return id;
@@ -69,10 +64,11 @@ public:
 		strftime(formatted, SIZE, "%R %e.%m.%Y", &time);
 		return formatted;
 	}
-	/*void set_licence_plate(const std::string& licence_plate)
+	const time_t get_timestamp()const
 	{
-		this->licence_plate = licence_plate;
-	}*/
+		tm copy = time;
+		return mktime(&copy);
+	}
 	void set_violation_id(int id)
 	{
 		this->id = id;
@@ -126,6 +122,11 @@ std::ostream& operator<<(std::ostream& os, const Crime& obj)
 {
 	return os << obj.get_time() << tab << obj.get_place() << " - " << obj.get_violation();
 }
+std::ofstream& operator<<(std::ofstream& os, const Crime& obj)
+{
+	os << obj.get_violation_id() << " " << obj.get_timestamp() << " " << obj.get_place();
+	return os;
+}
 
 void print(const std::map<std::string, std::list<Crime>>& base);
 void write_to_file(const std::map<std::string, std::list<Crime>>& base, const std::string& filename);
@@ -167,15 +168,21 @@ void write_to_file(const std::map<std::string, std::list<Crime>>& base, const st
 {
 	std::ofstream fout;
 	fout.open(filename);
-	fout << "Номер машины" << tab << "Дата и время" << tab << "Место и нарушение" << endl;
+	//fout << "Номер машины" << tab << "Дата и время" << tab << "Место и нарушение" << endl;
 	for (std::map<std::string, std::list<Crime>>::const_iterator map_it = base.begin(); map_it != base.end(); ++map_it)
 	{
-		fout << map_it->first << ":\n";
+		fout << map_it->first << ":\t";
 		for (std::list<Crime>::const_iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
 		{
-			fout << tab << *it << endl;
+			fout << *it << ",";
 		}
+
+		fout.seekp(-1, std::ios::cur);
+		fout << ";\n";
 	}
+	fout.close();
+	std::string command = "notepad " + filename;
+	system(command.c_str());
 }
 void read_form_file(const std::string& filename)
 {
