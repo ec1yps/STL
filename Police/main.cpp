@@ -135,7 +135,7 @@ public:
 		set_violation_id(violance_id);
 		set_place(place);
 		set_time(time);
-#ifdef DEBUG/
+#ifdef DEBUG
 		cout << "Constructor:\t" << this << endl;
 #endif // DEBUG
 	}
@@ -179,6 +179,8 @@ void print(const std::map<std::string, std::list<Crime>>& base);
 void save(const std::map<std::string, std::list<Crime>>& base, const std::string& filename);
 //void read_form_file(const std::string& filename);
 std::map<std::string, std::list<Crime>> load(const std::string& filename);
+void add_violation(std::map<std::string, std::list<Crime>>& base);
+void print_by_car_plate(std::map<std::string, std::list<Crime>>& base);
 
 //#define SAVE_CHECK
 //#define LOAD_CHECK
@@ -216,8 +218,8 @@ void main()
 		case 1: base = load("Database.txt"); break;
 		case 2: save(base, "Database.txt"); break;
 		case 3: print(base); break;
-		case 4: cout << "" << endl; break;
-		case 5: cout << "" << endl; break;
+		case 4: add_violation(base); break;
+		case 5: print_by_car_plate(base); break;
 		}
 	} while (true);
 }
@@ -226,7 +228,7 @@ int menu()
 {
 	int selected_item = 1;
 	char key;
-	do 
+	do
 	{
 		system("CLS");
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -353,4 +355,50 @@ std::map<std::string, std::list<Crime>> load(const std::string& filename)
 		std::cerr << "Error: file not found" << endl;
 	}
 	return base;
+}
+
+void add_violation(std::map<std::string, std::list<Crime>>& base)
+{
+	system("CLS");
+	SetConsoleCP(1251);
+
+	std::string plate, place, time;
+	int id;
+
+	cout << "Введите номер автомобиля: "; cin >> plate;
+	cin.ignore();
+	cout << "Введите id нарушения: "; cin >> id;
+	cin.ignore();
+	cout << "Введите место нарушения: "; std::getline(cin, place);
+	cout << "Введите время и дату: "; std::getline(cin, time);
+
+	base[plate].emplace_front(id, place, time);
+
+	cout << "Нарушение успешно добавлено" << endl;
+	system("pause");
+}
+
+void print_by_car_plate(std::map<std::string, std::list<Crime>>& base)
+{
+	system("CLS");
+
+	std::string key;
+	cout << "Введите номер машины: "; cin >> key;
+	std::list<std::string> plates;
+
+	for (std::map<std::string, std::list<Crime>>::const_iterator map_it = base.begin(); map_it != base.end(); ++map_it)
+	{
+		if (map_it->first != key)
+		{
+			plates.push_front(map_it->first);
+			continue;
+		}
+		cout << map_it->first << ":\n";
+
+		for (std::list<Crime>::const_iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
+			cout << tab << *it << endl;
+	}
+	if (plates.size() == base.size()) cout << "По данному номеру нет нарушений" << endl;
+
+	system("pause");
 }
